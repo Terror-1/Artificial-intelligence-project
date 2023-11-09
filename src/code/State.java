@@ -8,14 +8,20 @@ public class State {
 	private int energy;
 	private int moneySpent;
 	private int currBudget;
-	
-	public State(int prosperity,int food,int materials,int energy,int moneySpent, int currBudget) {
+	private int delay;
+	private int pendingType;
+
+
+
+	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType) {
 		this.prosperity=prosperity;
 		this.food=food;
 		this.materials=materials;
 		this.energy=energy;
 		this.moneySpent=moneySpent;
 		this.currBudget = currBudget;
+		this.delay = delay;
+		this.pendingType = pendingType;
 	}
 	public int getProsperity() {
 		return prosperity;
@@ -52,6 +58,21 @@ public class State {
 	}
 	public void setCurrBudget(int currBudget) {
 		this.currBudget = currBudget;
+	}
+	public int getDelay() {
+		return delay;
+	}
+
+	public void setDelay(int delay) {
+		this.delay = delay;
+	}
+
+	public int getPendingType() {
+		return pendingType;
+	}
+
+	public void setPendingType(int pendingType) {
+		this.pendingType = pendingType;
 	}
 	
 
