@@ -7,12 +7,15 @@ public class State {
 	private int materials;
 	private int energy;
 	private int moneySpent;
-	public State(int prosperity,int food,int materials,int energy,int moneySpent) {
+	private int currBudget;
+	
+	public State(int prosperity,int food,int materials,int energy,int moneySpent, int currBudget) {
 		this.prosperity=prosperity;
 		this.food=food;
 		this.materials=materials;
 		this.energy=energy;
 		this.moneySpent=moneySpent;
+		this.currBudget = currBudget;
 	}
 	public int getProsperity() {
 		return prosperity;
@@ -43,6 +46,12 @@ public class State {
 	}
 	public void setMoneySpent(int moneySpent) {
 		this.moneySpent = moneySpent;
+	}
+	public int getCurrBudget() {
+		return currBudget;
+	}
+	public void setCurrBudget(int currBudget) {
+		this.currBudget = currBudget;
 	}
 	
 
