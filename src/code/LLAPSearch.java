@@ -7,7 +7,7 @@ public class LLAPSearch {
 	private static int totalNum = 0;
 	private static final String[] actions = {"RequestFood","RequestMaterials","RequestEnergy","WAIT","BUILD1","BUILD2"};
 	private static int numBuilds = 2;
-	private static int initalBudget = 100000;
+	private static int initialBudget = 100000;
 	// food , material , energy
 	private static int initialProsperity;
 	private static int initialFood;
@@ -29,7 +29,9 @@ public class LLAPSearch {
 	private static final int[] energyUseBuild = new int [numBuilds];
 	private static final int[] prosperityBuild = new int [numBuilds];
 	private static int consumptionCost;
-	
+
+//	private static int prosp;
+
 	public static boolean isGoalTest (Node node ) {
 		return node.getState().getProsperity()>=100;
 	}
@@ -40,26 +42,35 @@ public class LLAPSearch {
 
 		for (String action :actions) {
 
-
+			if(action.equals("BUILD1")) {
+				Node newNode = handleBuild(currNode, currState,0);
+				if(newNode!=null)
+					expanded.add(newNode);
+			}
+			if(action.equals("BUILD2")) {
+				Node newNode = handleBuild(currNode, currState,1);
+				if(newNode!=null)
+					expanded.add(newNode);
+			}
 			if(currState.getCurrBudget()>consumptionCost&&currState.getFood()>=1&&currState.getMaterials()>=1&&currState.getEnergy()>=1) {
 				State newState = new State(currState.getProsperity(),currState.getFood()-1,currState.getMaterials()-1,currState.getEnergy()-1,
 						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0);
 
-				if (action.equals("RequestFood")&&currState.getPendingType()==0) {
+				if (action.equals("RequestFood")&&currState.getPendingType()==0&&currState.getFood()<Math.max(foodUseBuild[0],foodUseBuild[1])) {
 					newState.setDelay(delayRequestFood);
 					newState.setPendingType(1);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestFood",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 
-				} else if (action.equals("RequestMaterials")&&currState.getPendingType()==0) {
+				} else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<Math.max(materialsUseBuild[0],materialsUseBuild[1])) {
 					newState.setDelay(delayRequestMaterials);
 					newState.setPendingType(2);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestMaterials",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 
-				} else if (action.equals("RequestEnergy")&&currState.getPendingType()==0) {
+				} else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&&currState.getEnergy()<Math.max(energyUseBuild[0],energyUseBuild[1])) {
 					newState.setDelay(delayRequestEnergy);
 					newState.setPendingType(3);
 					handleDelivery(newState);
@@ -75,16 +86,7 @@ public class LLAPSearch {
 				}
 
 			}
-			 if(action.equals("BUILD1")) {
-				Node newNode = handleBuild(currNode, currState,0);
-				if(newNode!=null)
-					expanded.add(newNode);
-			}
-			 if(action.equals("BUILD2")) {
-				Node newNode = handleBuild(currNode, currState,1);
-				if(newNode!=null)
-					expanded.add(newNode);
-			}
+
 			
 		}
 		return expanded;
@@ -95,6 +97,7 @@ public class LLAPSearch {
 		State newState = new State(currState.getProsperity()+prosperityBuild[idx], currState.getFood()-foodUseBuild[idx], currState.getMaterials()-materialsUseBuild[idx], currState.getEnergy()-energyUseBuild[idx],
 				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType());
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
+		handleDelivery(newState);
 		return chk ? new Node(currNode,"BUILD"+(idx+1), currNode.getDepth()+1, newState.getMoneySpent(), newState) : null;
 	}
 
@@ -113,13 +116,13 @@ public class LLAPSearch {
 	public static String solve(String initialState , String strategy, boolean visualize ) {
 		interpreter(initialState);
 		String solution = "";
-		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initalBudget,0,0);
+		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0);
 		Node root = new Node(null, "", 0, 0, rootState);
 
 		switch (strategy) {
 		case "BF":solution = BFS(root);break;
 		case "DF":solution = DFS(root);break; 
-		case "ID":break;
+		case "ID":solution = IDS(root);break;
 		case "UC":solution = UCS(root);break;
 		case "GR1":break;
 		case "GR2":break;
@@ -176,6 +179,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.pop();
+//			prosp = Math.max(prosp,currNode.getState().getProsperity());
+//			System.out.println(currNode.getPathCost() + " " + currNode.getDepth() + " " + currNode.getOperator() + " " + currNode.getState().getProsperity() + " " + prosp);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -183,6 +188,34 @@ public class LLAPSearch {
 				nodes.push(child);
 			}
 		}
+	}
+	public static String depthLimited(Node root, int depth){
+		Stack<Node> nodes = new Stack<>();
+		nodes.push(root);
+		while(true) {
+			if(nodes.isEmpty()) return "NOSOLUTION";
+			Node currNode = nodes.pop();
+			if(currNode.getDepth() > depth) continue;
+			totalNum++;
+			if(isGoalTest(currNode)) return getPrint(currNode);
+			ArrayList<Node> children = expand(currNode);
+			for (Node child:children) {
+				nodes.push(child);
+			}
+		}
+	}
+	public static String IDS(Node root){
+		int depth = 0;
+		int maxDepth = initialBudget / consumptionCost;
+		while(depth <= maxDepth) {
+			String answer = depthLimited(root, depth);
+			if(!answer.equals("NOSOLUTION"))
+			{
+				return answer;
+			}
+			depth++;
+		}
+		return "NOSOLUTION";
 	}
 
 	public static String UCS(Node root) {
@@ -208,12 +241,12 @@ public class LLAPSearch {
 		return getPlan(node.getParent()) + node.getOperator() + ",";
 	}
 	public static void main(String[] args) {
-		System.out.println(solve("50;"+
-				"22,22,22;" +
-				"50,60,70;" +
-				"30,2;19,1;15,1;" +
-				"300,5,7,3,20;" +
-				"500,8,6,3,40;","UC",false));
+		System.out.println(solve("32;" +
+				"20,16,11;" +
+				"76,14,14;" +
+				"9,1;9,2;9,1;" +
+				"358,14,25,23,39;" +
+				"5024,20,17,17,38;","DF",false));
 	}
 	
 }
