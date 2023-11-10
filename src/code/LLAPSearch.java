@@ -23,6 +23,7 @@ public class LLAPSearch {
 	private static int delayRequestMaterials;
 	private static int delayRequestEnergy;
 
+
 	private static final int[] priceBuild = new int[numBuilds];
 	private static final int[] foodUseBuild = new int [numBuilds];
 	private static final int[] materialsUseBuild = new int [numBuilds];
@@ -41,7 +42,6 @@ public class LLAPSearch {
 		State currState = currNode.getState();
 
 		for (String action :actions) {
-
 			if(action.equals("BUILD1")) {
 				Node newNode = handleBuild(currNode, currState,0);
 				if(newNode!=null)
@@ -54,40 +54,36 @@ public class LLAPSearch {
 			}
 			if(currState.getCurrBudget()>consumptionCost&&currState.getFood()>=1&&currState.getMaterials()>=1&&currState.getEnergy()>=1) {
 				State newState = new State(currState.getProsperity(),currState.getFood()-1,currState.getMaterials()-1,currState.getEnergy()-1,
-						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0);
-
-				if (action.equals("RequestFood")&&currState.getPendingType()==0&&currState.getFood()<Math.max(foodUseBuild[0],foodUseBuild[1])) {
+						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0,getH1(currState.getStrategy(), currState.getProsperity()), currState.getStrategy());
+				if(action.equals("RequestFood")&&currState.getPendingType()==0&&currState.getFood()<Math.max(foodUseBuild[0],foodUseBuild[1])) {
 					newState.setDelay(delayRequestFood);
 					newState.setPendingType(1);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestFood",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
-
-				} else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<Math.max(materialsUseBuild[0],materialsUseBuild[1])) {
+				}
+				else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<Math.max(materialsUseBuild[0],materialsUseBuild[1])) {
 					newState.setDelay(delayRequestMaterials);
 					newState.setPendingType(2);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestMaterials",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
-
-				} else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&&currState.getEnergy()<Math.max(energyUseBuild[0],energyUseBuild[1])) {
+				}
+				else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&&currState.getEnergy()<Math.max(energyUseBuild[0],energyUseBuild[1])) {
 					newState.setDelay(delayRequestEnergy);
 					newState.setPendingType(3);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestEnergy",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
-
-				} else if (action.equals("WAIT")&&currState.getPendingType()!=0) {
+				}
+				else if (action.equals("WAIT")&&currState.getPendingType()!=0) {
 					newState.setDelay(currState.getDelay()-1);
 					newState.setPendingType(currState.getPendingType());
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"WAIT",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
-
 			}
-
-			
 		}
 		return expanded;
 	}
@@ -95,7 +91,7 @@ public class LLAPSearch {
 	private static Node handleBuild(Node currNode, State currState,int idx) {
 		int resourcesCost = foodUseBuild[idx]*unitPriceFood+materialsUseBuild[idx]*unitPriceMaterials+energyUseBuild[idx]*unitPriceEnergy;
 		State newState = new State(currState.getProsperity()+prosperityBuild[idx], currState.getFood()-foodUseBuild[idx], currState.getMaterials()-materialsUseBuild[idx], currState.getEnergy()-energyUseBuild[idx],
-				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType());
+				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType(),getH1(currState.getStrategy(), currState.getProsperity()+prosperityBuild[idx]), currState.getStrategy());
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
 		handleDelivery(newState);
 		return chk ? new Node(currNode,"BUILD"+(idx+1), currNode.getDepth()+1, newState.getMoneySpent(), newState) : null;
@@ -116,18 +112,17 @@ public class LLAPSearch {
 	public static String solve(String initialState , String strategy, boolean visualize ) {
 		interpreter(initialState);
 		String solution = "";
-		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0);
+		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0,getH1(strategy,initialProsperity),strategy);
 		Node root = new Node(null, "", 0, 0, rootState);
-
 		switch (strategy) {
 		case "BF":solution = BFS(root);break;
 		case "DF":solution = DFS(root);break; 
 		case "ID":solution = IDS(root);break;
 		case "UC":solution = UCS(root);break;
-		case "GR1":break;
-		case "GR2":break;
-		case "AS1":break;
-		case "AS2":break;
+		case "GR1":solution = UCS(root);break;
+		case "GR2":solution = UCS(root);break;
+		case "AS1":solution = UCS(root);break;
+		case "AS2":solution = UCS(root);break;
 		default:break;
 		}
 		return solution;
@@ -231,6 +226,18 @@ public class LLAPSearch {
 				nodes.add(child);
 			}
 		}
+	}
+
+	public static double getH1(String strat, int pros){
+		if(strat.equals("GR1")||strat.equals("AS1")) {
+			int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
+			int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
+			return Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * (100 - pros);
+		}
+		else if (strat.equals("GR2")||strat.equals("AS2")){
+			return 0;
+		}
+		return 0;
 	}
 
 	public static String getPrint(Node node){

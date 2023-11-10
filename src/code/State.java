@@ -2,6 +2,7 @@ package code;
 
 public class State {
 
+
 	private int prosperity;
 	private int food;
 	private int materials;
@@ -10,10 +11,28 @@ public class State {
 	private int currBudget;
 	private int delay;
 	private int pendingType;
+	private double h1;
+	private String strategy;
 
 
 
-	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType) {
+	public double getH1() {
+		return h1;
+	}
+
+	public void setH1(double h1) {
+		this.h1 = h1;
+	}
+
+	public String getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(String strategy) {
+		this.strategy = strategy;
+	}
+
+	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType, double h1, String strategy) {
 		this.prosperity=prosperity;
 		this.food=food;
 		this.materials=materials;
@@ -22,6 +41,8 @@ public class State {
 		this.currBudget = currBudget;
 		this.delay = delay;
 		this.pendingType = pendingType;
+		this.h1 = h1;
+		this.strategy = strategy;
 	}
 	public int getProsperity() {
 		return prosperity;
