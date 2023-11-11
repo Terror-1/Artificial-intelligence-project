@@ -30,7 +30,7 @@ public class LLAPSearch {
 	private static final int[] energyUseBuild = new int [numBuilds];
 	private static final int[] prosperityBuild = new int [numBuilds];
 	private static int consumptionCost;
-
+    private static HashSet<State> visited = new HashSet<State>();
 	
 	public static boolean isGoalTest (Node node ) {
 		return node.getState().getProsperity()>=100;
@@ -159,6 +159,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.poll();
+			if(visited.contains(currNode.getState()))continue;
+			else visited.add(currNode.getState());
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -173,6 +175,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.pop();
+			if(visited.contains(currNode.getState()))continue;
+			else visited.add(currNode.getState());
 //			prosp = Math.max(prosp,currNode.getState().getProsperity());
 //			System.out.println(currNode.getPathCost() + " " + currNode.getDepth() + " " + currNode.getOperator() + " " + currNode.getState().getProsperity() + " " + prosp);
 			totalNum++;
@@ -189,6 +193,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.pop();
+			if(visited.contains(currNode.getState()))continue;
+			else visited.add(currNode.getState());
 			if(currNode.getDepth() > depth) continue;
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
@@ -218,6 +224,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.poll();
+			if(visited.contains(currNode.getState()))continue;
+			else visited.add(currNode.getState());
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -238,7 +246,6 @@ public class LLAPSearch {
 		}
 		return 0;
 	}
-
 	public static String getPrint(Node node){
 		return getPlan(node.getParent()) + node.getOperator() + ";" + node.getPathCost() + ";"+totalNum ;
 	}
