@@ -59,6 +59,10 @@ public class Node implements Comparable<Node> {
 
 	@Override
 	public int compareTo(Node o) {
-		return this.pathCost - o.pathCost;
+		if(this.state.getStrategy().startsWith("GR")){
+			return (int)(this.state.getH1() - o.state.getH1());
+		}
+		else
+			return (int)((this.pathCost + this.state.getH1()) - (o.pathCost + o.state.getH1()));
 	}
 }
