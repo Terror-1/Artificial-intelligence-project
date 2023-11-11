@@ -60,9 +60,19 @@ public class Node implements Comparable<Node> {
 	@Override
 	public int compareTo(Node o) {
 		if(this.state.getStrategy().startsWith("GR")){
-			return (int)(this.state.getH1() - o.state.getH1());
+			return (int)(this.state.getH() - o.state.getH());
 		}
 		else
-			return (int)((this.pathCost + this.state.getH1()) - (o.pathCost + o.state.getH1()));
+			return (int)((this.pathCost + this.state.getH()) - (o.pathCost + o.state.getH()));
+	}
+
+	@Override
+	public String toString() {
+		return "Node{" +
+				"operator=" + operator +
+				", depth=" + depth +
+				", pathCost=" + pathCost +
+				", state=" + state.toString() +
+				'}';
 	}
 }

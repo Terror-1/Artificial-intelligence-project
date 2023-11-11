@@ -13,13 +13,13 @@ public class State {
 	private int currBudget;
 	private int delay;
 	private int pendingType;
-	private double h1;
+	private double h;
 	private String strategy;
 
 
 
 	
-	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType, double h1, String strategy) {
+	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType, double h, String strategy) {
 		this.prosperity=prosperity;
 		this.food=food;
 		this.materials=materials;
@@ -28,7 +28,7 @@ public class State {
 		this.currBudget = currBudget;
 		this.delay = delay;
 		this.pendingType = pendingType;
-		this.h1 = h1;
+		this.h = h;
 		this.strategy = strategy;
 	}
 	public int getProsperity() {
@@ -82,13 +82,26 @@ public class State {
 	public void setPendingType(int pendingType) {
 		this.pendingType = pendingType;
 	}
-	public double getH1() {
-		return h1;
+	public double getH() {
+		return h;
 	}
+
+	public void setH(double h) {
+		this.h = h;
+	}
+
+	public String getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(String strategy) {
+		this.strategy = strategy;
+	}
+
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(currBudget, delay, energy, food, h1, materials, moneySpent, pendingType, prosperity,
+		return Objects.hash(currBudget, delay, energy, food, h, materials, moneySpent, pendingType, prosperity,
 				strategy);
 	}
 
@@ -102,22 +115,23 @@ public class State {
 			return false;
 		State other = (State) obj;
 		return currBudget == other.currBudget && delay == other.delay && energy == other.energy && food == other.food
-				&& Double.doubleToLongBits(h1) == Double.doubleToLongBits(other.h1) && materials == other.materials
+				&& Double.doubleToLongBits(h) == Double.doubleToLongBits(other.h) && materials == other.materials
 				&& moneySpent == other.moneySpent && pendingType == other.pendingType && prosperity == other.prosperity
 				&& Objects.equals(strategy, other.strategy);
 	}
 
-	public void setH1(double h1) {
-		this.h1 = h1;
+	@Override
+	public String toString() {
+		return "State{" +
+				"moneySpent=" + moneySpent +
+				", currBudget=" + currBudget +
+				", prosperity=" + prosperity +
+				", food=" + food +
+				", materials=" + materials +
+				", energy=" + energy +
+				", delay=" + delay +
+				", pendingType=" + pendingType +
+				", heuristic=" + h +
+				'}';
 	}
-
-	public String getStrategy() {
-		return strategy;
-	}
-
-	public void setStrategy(String strategy) {
-		this.strategy = strategy;
-	}
-
-
 }

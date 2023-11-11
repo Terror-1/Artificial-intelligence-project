@@ -23,6 +23,7 @@ public class LLAPSearch {
 	private static int delayRequestMaterials;
 	private static int delayRequestEnergy;
 
+	private static boolean visual;
 
 	private static final int[] priceBuild = new int[numBuilds];
 	private static final int[] foodUseBuild = new int [numBuilds];
@@ -53,7 +54,8 @@ public class LLAPSearch {
 			}
 			if(currState.getCurrBudget()>consumptionCost&&currState.getFood()>=1&&currState.getMaterials()>=1&&currState.getEnergy()>=1) {
 				State newState = new State(currState.getProsperity(),currState.getFood()-1,currState.getMaterials()-1,currState.getEnergy()-1,
-						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0,getH1(currState.getStrategy(), currState.getProsperity()), currState.getStrategy());
+						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0,0, currState.getStrategy());
+				newState.setH(getH(newState));
 				if(action.equals("RequestFood")&&currState.getPendingType()==0&&currState.getFood()<Math.max(foodUseBuild[0],foodUseBuild[1])) {
 					newState.setDelay(delayRequestFood);
 					newState.setPendingType(1);
@@ -90,7 +92,8 @@ public class LLAPSearch {
 	private static Node handleBuild(Node currNode, State currState,int idx) {
 		int resourcesCost = foodUseBuild[idx]*unitPriceFood+materialsUseBuild[idx]*unitPriceMaterials+energyUseBuild[idx]*unitPriceEnergy;
 		State newState = new State(currState.getProsperity()+prosperityBuild[idx], currState.getFood()-foodUseBuild[idx], currState.getMaterials()-materialsUseBuild[idx], currState.getEnergy()-energyUseBuild[idx],
-				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType(),getH1(currState.getStrategy(), currState.getProsperity()+prosperityBuild[idx]), currState.getStrategy());
+				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType(),0, currState.getStrategy());
+		newState.setH(getH(newState));
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
 		handleDelivery(newState);
 		return chk ? new Node(currNode,"BUILD"+(idx+1), currNode.getDepth()+1, newState.getMoneySpent(), newState) : null;
@@ -108,10 +111,12 @@ public class LLAPSearch {
 			currState.setPendingType(0);
 		}
 	}
-	public static String solve(String initialState , String strategy, boolean visualize ) {
+	public static String solve(String initialState , String strategy, boolean visualize) {
 		interpreter(initialState);
 		String solution = "";
-		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0,getH1(strategy,initialProsperity),strategy);
+		visual = visualize;
+		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0,0,strategy);
+		rootState.setH(getH(rootState));
 		Node root = new Node(null, "", 0, 0, rootState);
 		switch (strategy) {
 		case "BF":solution = BFS(root);break;
@@ -161,6 +166,7 @@ public class LLAPSearch {
 			Node currNode = nodes.poll();
 			if(visited.contains(currNode.getState()))continue;
 			else visited.add(currNode.getState());
+			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -177,8 +183,7 @@ public class LLAPSearch {
 			Node currNode = nodes.pop();
 			if(visited.contains(currNode.getState()))continue;
 			else visited.add(currNode.getState());
-//			prosp = Math.max(prosp,currNode.getState().getProsperity());
-//			System.out.println(currNode.getPathCost() + " " + currNode.getDepth() + " " + currNode.getOperator() + " " + currNode.getState().getProsperity() + " " + prosp);
+			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -189,6 +194,7 @@ public class LLAPSearch {
 	}
 	public static String depthLimited(Node root, int depth){
 		Stack<Node> nodes = new Stack<>();
+		visited = new HashSet<>();
 		nodes.push(root);
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
@@ -196,6 +202,7 @@ public class LLAPSearch {
 			if(visited.contains(currNode.getState()))continue;
 			else visited.add(currNode.getState());
 			if(currNode.getDepth() > depth) continue;
+			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -226,6 +233,7 @@ public class LLAPSearch {
 			Node currNode = nodes.poll();
 			if(visited.contains(currNode.getState()))continue;
 			else visited.add(currNode.getState());
+			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
 			ArrayList<Node> children = expand(currNode);
@@ -235,14 +243,26 @@ public class LLAPSearch {
 		}
 	}
 
-	public static double getH1(String strat, int pros){
-		if(strat.equals("GR1")||strat.equals("AS1")) {
-			int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
-			int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
+	public static double getH(State s){
+		String strat = s.getStrategy();
+		int pros = s.getProsperity();
+		int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
+		int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
+
+		if(strat.equals("GR1")||strat.equals("AS1")){
 			return Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * (100 - pros);
 		}
 		else if (strat.equals("GR2")||strat.equals("AS2")){
-			return 0;
+			int req1 = (int) (Math.ceil(1.0 * (foodUseBuild[0]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * (materialsUseBuild[0]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * (energyUseBuild[0]- s.getEnergy()) / amountRequestEnergy));
+
+			int req2 = (int) (Math.ceil(1.0 * (foodUseBuild[1]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * (materialsUseBuild[1]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * (energyUseBuild[1]- s.getEnergy()) / amountRequestEnergy));
+			resourcesCost1 += req1*consumptionCost;
+			resourcesCost2 += req2*consumptionCost;
+			return Math.min((1.0 * resourcesCost1 / prosperityBuild[0]), ((1.0 * resourcesCost2 / prosperityBuild[1]))) * (100 - pros);
 		}
 		return 0;
 	}
@@ -259,7 +279,7 @@ public class LLAPSearch {
 				"76,14,14;" +
 				"9,1;9,2;9,1;" +
 				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","DF",false));
+				"5024,20,17,17,38;","DF",true));
 	}
 	
 }
