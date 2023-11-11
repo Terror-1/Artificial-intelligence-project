@@ -2,7 +2,7 @@ package code;
 
 import java.util.*;
 
-public class LLAPSearch {
+public class LLAPSearch extends GenericSearch{
 
 	private static int totalNum = 0;
 	private static final String[] actions = {"RequestFood","RequestMaterials","RequestEnergy","WAIT","BUILD1","BUILD2"};
@@ -22,16 +22,14 @@ public class LLAPSearch {
 	private static int delayRequestFood;
 	private static int delayRequestMaterials;
 	private static int delayRequestEnergy;
-
 	private static boolean visual;
-
 	private static final int[] priceBuild = new int[numBuilds];
 	private static final int[] foodUseBuild = new int [numBuilds];
 	private static final int[] materialsUseBuild = new int [numBuilds];
 	private static final int[] energyUseBuild = new int [numBuilds];
 	private static final int[] prosperityBuild = new int [numBuilds];
 	private static int consumptionCost;
-    private static HashSet<State> visited = new HashSet<State>();
+    private static HashSet<Integer> visited = new HashSet<Integer>();
 	
 	public static boolean isGoalTest (Node node ) {
 		return node.getState().getProsperity()>=100;
@@ -56,21 +54,21 @@ public class LLAPSearch {
 				State newState = new State(currState.getProsperity(),currState.getFood()-1,currState.getMaterials()-1,currState.getEnergy()-1,
 						currState.getMoneySpent()+consumptionCost,currState.getCurrBudget()-consumptionCost,0,0,0, currState.getStrategy());
 				newState.setH(getH(newState));
-				if(action.equals("RequestFood")&&currState.getPendingType()==0&&currState.getFood()<Math.max(foodUseBuild[0],foodUseBuild[1])) {
+				if(action.equals("RequestFood")&&currState.getPendingType()==0&& currState.getFood()<50) {
 					newState.setDelay(delayRequestFood);
 					newState.setPendingType(1);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestFood",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
-				else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<Math.max(materialsUseBuild[0],materialsUseBuild[1])) {
+				else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<50) {
 					newState.setDelay(delayRequestMaterials);
 					newState.setPendingType(2);
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"RequestMaterials",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
-				else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&&currState.getEnergy()<Math.max(energyUseBuild[0],energyUseBuild[1])) {
+				else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&& currState.getEnergy()<50) {
 					newState.setDelay(delayRequestEnergy);
 					newState.setPendingType(3);
 					handleDelivery(newState);
@@ -164,8 +162,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.poll();
-			if(visited.contains(currNode.getState()))continue;
-			else visited.add(currNode.getState());
+			if(visited.contains(currNode.getState().hashCode()))continue;
+			else visited.add(currNode.getState().hashCode());
 			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
@@ -181,8 +179,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.pop();
-			if(visited.contains(currNode.getState()))continue;
-			else visited.add(currNode.getState());
+			if(visited.contains(currNode.getState().hashCode()))continue;
+			else visited.add(currNode.getState().hashCode());
 			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
@@ -194,13 +192,13 @@ public class LLAPSearch {
 	}
 	public static String depthLimited(Node root, int depth){
 		Stack<Node> nodes = new Stack<>();
-		visited = new HashSet<>();
+		visited = new HashSet<Integer>();
 		nodes.push(root);
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.pop();
-			if(visited.contains(currNode.getState()))continue;
-			else visited.add(currNode.getState());
+			if(visited.contains(currNode.getState().hashCode()))continue;
+			else visited.add(currNode.getState().hashCode());
 			if(currNode.getDepth() > depth) continue;
 			if(visual) System.out.println(currNode);
 			totalNum++;
@@ -231,8 +229,8 @@ public class LLAPSearch {
 		while(true) {
 			if(nodes.isEmpty()) return "NOSOLUTION";
 			Node currNode = nodes.poll();
-			if(visited.contains(currNode.getState()))continue;
-			else visited.add(currNode.getState());
+			if(visited.contains(currNode.getState().hashCode()))continue;
+			else visited.add(currNode.getState().hashCode());
 			if(visual) System.out.println(currNode);
 			totalNum++;
 			if(isGoalTest(currNode)) return getPrint(currNode);
