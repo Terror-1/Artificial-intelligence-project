@@ -30,8 +30,7 @@ public class LLAPSearch {
 	private static final int[] prosperityBuild = new int [numBuilds];
 	private static int consumptionCost;
 
-//	private static int prosp;
-
+	
 	public static boolean isGoalTest (Node node ) {
 		return node.getState().getProsperity()>=100;
 	}
