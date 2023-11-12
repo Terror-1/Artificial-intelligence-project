@@ -35,7 +35,14 @@ public class LLAPSearch extends GenericSearch{
 		return node.getState().getProsperity()>=100;
 	}
 	public static ArrayList<Node> expand(Node currNode) {
-
+//		Runtime rt = Runtime.getRuntime();
+//
+//		long total_mem = rt.totalMemory();
+//
+//		long free_mem = rt.freeMemory();
+//
+//		long used_mem = (total_mem - free_mem)/(1024^2);
+//		System.out.println("Amount of used memory: " + used_mem+" ");
 		ArrayList<Node> expanded = new ArrayList<>();
 		State currState = currNode.getState();
 
@@ -76,7 +83,7 @@ public class LLAPSearch extends GenericSearch{
 					expanded.add(newNode);
 				}
 				else if (action.equals("WAIT")&&currState.getPendingType()!=0) {
-					newState.setDelay(currState.getDelay()-1);
+					newState.setDelay(Math.max(0,currState.getDelay()-1));
 					newState.setPendingType(currState.getPendingType());
 					handleDelivery(newState);
 					Node newNode = new Node(currNode,"WAIT",currNode.getDepth()+1, newState.getMoneySpent(),newState);
@@ -90,7 +97,7 @@ public class LLAPSearch extends GenericSearch{
 	private static Node handleBuild(Node currNode, State currState,int idx) {
 		int resourcesCost = foodUseBuild[idx]*unitPriceFood+materialsUseBuild[idx]*unitPriceMaterials+energyUseBuild[idx]*unitPriceEnergy;
 		State newState = new State(currState.getProsperity()+prosperityBuild[idx], currState.getFood()-foodUseBuild[idx], currState.getMaterials()-materialsUseBuild[idx], currState.getEnergy()-energyUseBuild[idx],
-				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, currState.getDelay()-1, currState.getPendingType(),0, currState.getStrategy());
+				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, Math.max(0,currState.getDelay()-1), currState.getPendingType(),0, currState.getStrategy());
 		newState.setH(getH(newState));
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
 		handleDelivery(newState);
@@ -171,6 +178,7 @@ public class LLAPSearch extends GenericSearch{
 			for (Node child:children) {
 				nodes.add(child);
 			}
+//			System.out.println(nodes.size());
 		}
 	}
 	public static String DFS(Node root) {
@@ -241,26 +249,26 @@ public class LLAPSearch extends GenericSearch{
 		}
 	}
 
-	public static double getH(State s){
+	public static int getH(State s){
 		String strat = s.getStrategy();
 		int pros = s.getProsperity();
 		int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
 		int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
 
 		if(strat.equals("GR1")||strat.equals("AS1")){
-			return Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * (100 - pros);
+			return (int) Math.ceil(Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * Math.max(0,(100 - pros)));
 		}
 		else if (strat.equals("GR2")||strat.equals("AS2")){
-			int req1 = (int) (Math.ceil(1.0 * (foodUseBuild[0]- s.getFood()) / amountRequestFood) +
-					Math.ceil(1.0 * (materialsUseBuild[0]- s.getMaterials()) / amountRequestMaterials) +
-					Math.ceil(1.0 * (energyUseBuild[0]- s.getEnergy()) / amountRequestEnergy));
+			int req1 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[0]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * Math.max(0,materialsUseBuild[0]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * Math.max(0,energyUseBuild[0]- s.getEnergy()) / amountRequestEnergy));
 
-			int req2 = (int) (Math.ceil(1.0 * (foodUseBuild[1]- s.getFood()) / amountRequestFood) +
-					Math.ceil(1.0 * (materialsUseBuild[1]- s.getMaterials()) / amountRequestMaterials) +
-					Math.ceil(1.0 * (energyUseBuild[1]- s.getEnergy()) / amountRequestEnergy));
+			int req2 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[1]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * Math.max(0,materialsUseBuild[1]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * Math.max(0,energyUseBuild[1]- s.getEnergy()) / amountRequestEnergy));
 			resourcesCost1 += req1*consumptionCost;
 			resourcesCost2 += req2*consumptionCost;
-			return Math.min((1.0 * resourcesCost1 / prosperityBuild[0]), ((1.0 * resourcesCost2 / prosperityBuild[1]))) * (100 - pros);
+			return (int) Math.ceil(Math.min((1.0 * resourcesCost1 / prosperityBuild[0]), ((1.0 * resourcesCost2 / prosperityBuild[1]))) *Math.max(0,(100-pros)));
 		}
 		return 0;
 	}
@@ -272,12 +280,40 @@ public class LLAPSearch extends GenericSearch{
 		return getPlan(node.getParent()) + node.getOperator() + ",";
 	}
 	public static void main(String[] args) {
+		Runtime rt = Runtime.getRuntime();
+
+		long total_mem = rt.totalMemory();
+
+		long free_mem = rt.freeMemory();
+
+		long used_mem = total_mem - free_mem;
+		System.out.println("total memory: "+total_mem);
+		System.out.println("free memory: "+free_mem);
+		System.out.println("Amount of used memory: " + used_mem);
+
 		System.out.println(solve("32;" +
 				"20,16,11;" +
 				"76,14,14;" +
 				"9,1;9,2;9,1;" +
 				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","DF",true));
+				"5024,20,17,17,38;","AS1",false));
+		totalNum = 0;
+		System.out.println(solve("32;" +
+				"20,16,11;" +
+				"76,14,14;" +
+				"9,1;9,2;9,1;" +
+				"358,14,25,23,39;" +
+				"5024,20,17,17,38;","AS2",false));
+		totalNum = 0;
+		System.out.println(solve("32;" +
+				"20,16,11;" +
+				"76,14,14;" +
+				"9,1;9,2;9,1;" +
+				"358,14,25,23,39;" +
+				"5024,20,17,17,38;","DF",false));
+		System.out.println("Amount of used memory: " + used_mem);
+
 	}
+
 	
 }
