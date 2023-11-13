@@ -35,14 +35,6 @@ public class LLAPSearch extends GenericSearch{
 		return node.getState().getProsperity()>=100;
 	}
 	public static ArrayList<Node> expand(Node currNode) {
-//		Runtime rt = Runtime.getRuntime();
-//
-//		long total_mem = rt.totalMemory();
-//
-//		long free_mem = rt.freeMemory();
-//
-//		long used_mem = (total_mem - free_mem)/(1024^2);
-//		System.out.println("Amount of used memory: " + used_mem+" ");
 		ArrayList<Node> expanded = new ArrayList<>();
 		State currState = currNode.getState();
 
@@ -178,7 +170,6 @@ public class LLAPSearch extends GenericSearch{
 			for (Node child:children) {
 				nodes.add(child);
 			}
-//			System.out.println(nodes.size());
 		}
 	}
 	public static String DFS(Node root) {
@@ -278,42 +269,5 @@ public class LLAPSearch extends GenericSearch{
 	public static String getPlan(Node node){
 		if(node.getParent() == null) return node.getOperator();
 		return getPlan(node.getParent()) + node.getOperator() + ",";
-	}
-	public static void main(String[] args) {
-		Runtime rt = Runtime.getRuntime();
-
-		long total_mem = rt.totalMemory();
-
-		long free_mem = rt.freeMemory();
-
-		long used_mem = total_mem - free_mem;
-		System.out.println("total memory: "+total_mem);
-		System.out.println("free memory: "+free_mem);
-		System.out.println("Amount of used memory: " + used_mem);
-
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","AS1",false));
-		totalNum = 0;
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","AS2",false));
-		totalNum = 0;
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","DF",false));
-		System.out.println("Amount of used memory: " + used_mem);
-
-	}
-
-	
+	}	
 }

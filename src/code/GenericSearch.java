@@ -1,6 +1,11 @@
 package code;
 
-public class GenericSearch {
+import java.util.ArrayList;
 
+public abstract class GenericSearch {
+    
+	
+	
+	
 	
 }
