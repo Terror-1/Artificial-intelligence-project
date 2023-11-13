@@ -13,13 +13,13 @@ public class State {
 	private int currBudget;
 	private int delay;
 	private int pendingType;
-	private double h;
+	private int h;
 	private String strategy;
 
 
 
 	
-	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType, double h, String strategy) {
+	public State(int prosperity, int food, int materials, int energy, int moneySpent, int currBudget, int delay, int pendingType, int h, String strategy) {
 		this.prosperity=prosperity;
 		this.food=food;
 		this.materials=materials;
@@ -82,11 +82,11 @@ public class State {
 	public void setPendingType(int pendingType) {
 		this.pendingType = pendingType;
 	}
-	public double getH() {
+	public int getH() {
 		return h;
 	}
 
-	public void setH(double h) {
+	public void setH(int h) {
 		this.h = h;
 	}
 
@@ -115,7 +115,7 @@ public class State {
 			return false;
 		State other = (State) obj;
 		return currBudget == other.currBudget && delay == other.delay && energy == other.energy && food == other.food
-				&& Double.doubleToLongBits(h) == Double.doubleToLongBits(other.h) && materials == other.materials
+				&& h == other.h && materials == other.materials
 				&& moneySpent == other.moneySpent && pendingType == other.pendingType && prosperity == other.prosperity
 				&& Objects.equals(strategy, other.strategy);
 	}
