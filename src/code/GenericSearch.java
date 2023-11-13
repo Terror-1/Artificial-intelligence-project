@@ -9,17 +9,14 @@ import java.util.Stack;
 
 public abstract class GenericSearch {
 
-  
-    
 	public abstract Node getInitialState(String problem,String strategy) ;
 	public abstract boolean isGoalTest(Node node);
+	public abstract ArrayList<Node> expand(Node node);
 	public abstract String getPrint(Node node);
 	public abstract String getPlan(Node node);
-	public abstract ArrayList<Node> expand(Node node);
     public abstract int getMaxDepth();
     public abstract boolean isVisual();
     public abstract void incrementTotalNum();    
-    
     
 	public String generalSearch(String problem , String strategy) {
 		String solution = "";
@@ -56,7 +53,7 @@ public abstract class GenericSearch {
 			}
 		}
 	}
-	public  String DFS(Node root) {
+	public String DFS(Node root) {
 		Stack<Node> nodes = new Stack<>();
 		HashSet<Integer> visited =  new HashSet<Integer>();
 		boolean visual = isVisual();
@@ -75,7 +72,7 @@ public abstract class GenericSearch {
 			}
 		}
 	}
-	public  String depthLimited(Node root, int depth){
+	public String depthLimited(Node root, int depth){
 		Stack<Node> nodes = new Stack<>();
 		boolean visual = isVisual();
 		HashSet<Integer> visited =  new HashSet<Integer>();
