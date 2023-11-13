@@ -105,6 +105,7 @@ public class LLAPSearch extends GenericSearch{
 		return getPlan(node.getParent()) + node.getOperator() + ";" + node.getPathCost() + ";"+totalNum;
 	}
 	public String getPlan(Node node){
+		if(node == null) return "";
 		if(node.getParent() == null) return node.getOperator();
 		return getPlan(node.getParent()) + node.getOperator() + ",";
 	}	
