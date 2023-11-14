@@ -65,28 +65,28 @@ public class LLAPSearch extends GenericSearch{
 				if(action.equals("RequestFood")&&currState.getPendingType()==0&& currState.getFood()<50) {
 					newState.setDelay(delayRequestFood);
 					newState.setPendingType(1);
-					handleDelivery(newState);
+					handleDelivery(newState,-1);
 					Node newNode = new Node(currNode,"RequestFood",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
 				else if (action.equals("RequestMaterials")&&currState.getPendingType()==0&&currState.getMaterials()<50) {
 					newState.setDelay(delayRequestMaterials);
 					newState.setPendingType(2);
-					handleDelivery(newState);
+					handleDelivery(newState,-1);
 					Node newNode = new Node(currNode,"RequestMaterials",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
 				else if (action.equals("RequestEnergy")&&currState.getPendingType()==0&& currState.getEnergy()<50) {
 					newState.setDelay(delayRequestEnergy);
 					newState.setPendingType(3);
-					handleDelivery(newState);
+					handleDelivery(newState,-1);
 					Node newNode = new Node(currNode,"RequestEnergy",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
 				else if (action.equals("WAIT")&&currState.getPendingType()!=0) {
 					newState.setDelay(Math.max(0,currState.getDelay()-1));
 					newState.setPendingType(currState.getPendingType());
-					handleDelivery(newState);
+					handleDelivery(newState,-1);
 					Node newNode = new Node(currNode,"WAIT",currNode.getDepth()+1, newState.getMoneySpent(),newState);
 					expanded.add(newNode);
 				}
@@ -118,7 +118,7 @@ public class LLAPSearch extends GenericSearch{
 		llap.visual = visualize;
 		String solution = llap.generalSearch(initialState, strategy);
 		return solution;
-		}
+	}
 	
 	private static Node handleBuild(Node currNode, State currState,int idx) {
 		int resourcesCost = foodUseBuild[idx]*unitPriceFood+materialsUseBuild[idx]*unitPriceMaterials+energyUseBuild[idx]*unitPriceEnergy;
@@ -126,7 +126,7 @@ public class LLAPSearch extends GenericSearch{
 				currState.getMoneySpent()+priceBuild[idx]+resourcesCost, currState.getCurrBudget()-priceBuild[idx]-resourcesCost, Math.max(0,currState.getDelay()-1), currState.getPendingType(),0, currState.getStrategy());
 		newState.setH(getH(newState));
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
-		handleDelivery(newState);
+		handleDelivery(newState, idx);
 		return chk ? new Node(currNode,"BUILD"+(idx+1), currNode.getDepth()+1, newState.getMoneySpent(), newState) : null;
 	}
 	public static int getH(State s){
@@ -153,14 +153,17 @@ public class LLAPSearch extends GenericSearch{
 		return 0;
 	}
 
-	private static void handleDelivery(State currState){
+	private static void handleDelivery(State currState, int buildIdx){
 		if(currState.getPendingType()!=0&&currState.getDelay()==0){
 			if(currState.getPendingType()==1){
-				currState.setFood(Math.min(50,currState.getFood()+amountRequestFood));
+				currState.setFood(Math.min(50,currState.getFood()+amountRequestFood+(buildIdx == -1 ? 0 : foodUseBuild[buildIdx]))
+						- (buildIdx == -1 ? 0 : foodUseBuild[buildIdx]));
 			}if(currState.getPendingType()==2){
-				currState.setMaterials(Math.min(50,currState.getMaterials()+amountRequestMaterials));
+				currState.setMaterials(Math.min(50,currState.getMaterials()+amountRequestMaterials+(buildIdx == -1 ? 0 : materialsUseBuild[buildIdx]))
+						- (buildIdx == -1 ? 0 : materialsUseBuild[buildIdx]));
 			}if(currState.getPendingType()==3){
-				currState.setEnergy(Math.min(50,currState.getEnergy()+amountRequestEnergy));
+				currState.setEnergy(Math.min(50,currState.getEnergy()+amountRequestEnergy+(buildIdx == -1 ? 0 : energyUseBuild[buildIdx]))
+						- (buildIdx == -1 ? 0 : energyUseBuild[buildIdx]));
 			}
 			currState.setPendingType(0);
 		}
