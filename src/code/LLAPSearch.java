@@ -4,10 +4,19 @@ import java.util.*;
 
 public class LLAPSearch extends GenericSearch{
 
-	private static int totalNum = 0;
+	
+	private int totalNum ;
+	private boolean visual;
+	private int maxDepth;
+    
+	public LLAPSearch() {
+		this.totalNum = 0;
+		this.maxDepth = initialBudget/consumptionCost;
+	}
+	//static variables
 	private static final String[] actions = {"RequestFood","RequestMaterials","RequestEnergy","WAIT","BUILD1","BUILD2"};
-	private static int numBuilds = 2;
-	private static int initialBudget = 100000;
+	private static final int numBuilds = 2;
+	private static final int initialBudget = 100000;
 	// food , material , energy
 	private static int initialProsperity;
 	private static int initialFood;
@@ -22,27 +31,19 @@ public class LLAPSearch extends GenericSearch{
 	private static int delayRequestFood;
 	private static int delayRequestMaterials;
 	private static int delayRequestEnergy;
-	private static boolean visual;
+	private static int consumptionCost;
 	private static final int[] priceBuild = new int[numBuilds];
 	private static final int[] foodUseBuild = new int [numBuilds];
 	private static final int[] materialsUseBuild = new int [numBuilds];
 	private static final int[] energyUseBuild = new int [numBuilds];
 	private static final int[] prosperityBuild = new int [numBuilds];
-	private static int consumptionCost;
-    private static HashSet<Integer> visited = new HashSet<Integer>();
 	
-	public static boolean isGoalTest (Node node ) {
+	
+	// abstract functions
+	public boolean isGoalTest (Node node ) {
 		return node.getState().getProsperity()>=100;
 	}
-	public static ArrayList<Node> expand(Node currNode) {
-//		Runtime rt = Runtime.getRuntime();
-//
-//		long total_mem = rt.totalMemory();
-//
-//		long free_mem = rt.freeMemory();
-//
-//		long used_mem = (total_mem - free_mem)/(1024^2);
-//		System.out.println("Amount of used memory: " + used_mem+" ");
+	public ArrayList<Node> expand(Node currNode) {
 		ArrayList<Node> expanded = new ArrayList<>();
 		State currState = currNode.getState();
 
@@ -94,6 +95,31 @@ public class LLAPSearch extends GenericSearch{
 		return expanded;
 	}
 
+	public Node getInitialState(String problem,String strategy) {
+		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0,0,strategy);
+		rootState.setH(getH(rootState));
+		return new Node(null, "", 0, 0, rootState);
+	}
+	
+	public String getPrint(Node node){
+		return getPlan(node.getParent()) + node.getOperator() + ";" + node.getPathCost() + ";"+totalNum;
+	}
+	public String getPlan(Node node){
+		if(node == null) return "";
+		if(node.getParent() == null) return node.getOperator();
+		return getPlan(node.getParent()) + node.getOperator() + ",";
+	}	
+	
+	
+	//static functions 
+	public static String solve(String initialState , String strategy, boolean visualize) {
+		interpreter(initialState);
+		LLAPSearch llap = new LLAPSearch();
+		llap.visual = visualize;
+		String solution = llap.generalSearch(initialState, strategy);
+		return solution;
+		}
+	
 	private static Node handleBuild(Node currNode, State currState,int idx) {
 		int resourcesCost = foodUseBuild[idx]*unitPriceFood+materialsUseBuild[idx]*unitPriceMaterials+energyUseBuild[idx]*unitPriceEnergy;
 		State newState = new State(currState.getProsperity()+prosperityBuild[idx], currState.getFood()-foodUseBuild[idx], currState.getMaterials()-materialsUseBuild[idx], currState.getEnergy()-energyUseBuild[idx],
@@ -102,6 +128,29 @@ public class LLAPSearch extends GenericSearch{
 		boolean chk = (newState.getCurrBudget() >= 0) && (newState.getFood() >= 0) && (newState.getEnergy() >= 0) && (newState.getMaterials() >= 0);
 		handleDelivery(newState);
 		return chk ? new Node(currNode,"BUILD"+(idx+1), currNode.getDepth()+1, newState.getMoneySpent(), newState) : null;
+	}
+	public static int getH(State s){
+		String strat = s.getStrategy();
+		int pros = s.getProsperity();
+		int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
+		int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
+
+		if(strat.equals("GR1")||strat.equals("AS1")){
+			return (int) Math.ceil(Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * Math.max(0,(100 - pros)));
+		}
+		else if (strat.equals("GR2")||strat.equals("AS2")){
+			int req1 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[0]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * Math.max(0,materialsUseBuild[0]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * Math.max(0,energyUseBuild[0]- s.getEnergy()) / amountRequestEnergy));
+
+			int req2 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[1]- s.getFood()) / amountRequestFood) +
+					Math.ceil(1.0 * Math.max(0,materialsUseBuild[1]- s.getMaterials()) / amountRequestMaterials) +
+					Math.ceil(1.0 * Math.max(0,energyUseBuild[1]- s.getEnergy()) / amountRequestEnergy));
+			resourcesCost1 += req1*consumptionCost;
+			resourcesCost2 += req2*consumptionCost;
+			return (int) Math.ceil(Math.min((1.0 * resourcesCost1 / prosperityBuild[0]), ((1.0 * resourcesCost2 / prosperityBuild[1]))) *Math.max(0,(100-pros)));
+		}
+		return 0;
 	}
 
 	private static void handleDelivery(State currState){
@@ -115,26 +164,6 @@ public class LLAPSearch extends GenericSearch{
 			}
 			currState.setPendingType(0);
 		}
-	}
-	public static String solve(String initialState , String strategy, boolean visualize) {
-		interpreter(initialState);
-		String solution = "";
-		visual = visualize;
-		State rootState = new State(initialProsperity, initialFood, initialMaterials, initialEnergy, 0,initialBudget,0,0,0,strategy);
-		rootState.setH(getH(rootState));
-		Node root = new Node(null, "", 0, 0, rootState);
-		switch (strategy) {
-		case "BF":solution = BFS(root);break;
-		case "DF":solution = DFS(root);break; 
-		case "ID":solution = IDS(root);break;
-		case "UC":solution = UCS(root);break;
-		case "GR1":solution = UCS(root);break;
-		case "GR2":solution = UCS(root);break;
-		case "AS1":solution = UCS(root);break;
-		case "AS2":solution = UCS(root);break;
-		default:break;
-		}
-		return solution;
 	}
 	private static void interpreter(String initialState){
 		String [] vals = initialState.split("[;,]");
@@ -163,157 +192,14 @@ public class LLAPSearch extends GenericSearch{
 		prosperityBuild[1] = Integer.parseInt(vals[22]);
 		consumptionCost = unitPriceEnergy+unitPriceFood+unitPriceMaterials;
 	}
-	public static String BFS(Node root) {
-		Queue<Node> nodes = new LinkedList<>();
-		nodes.add(root);
-		while(true) {
-			if(nodes.isEmpty()) return "NOSOLUTION";
-			Node currNode = nodes.poll();
-			if(visited.contains(currNode.getState().hashCode()))continue;
-			else visited.add(currNode.getState().hashCode());
-			if(visual) System.out.println(currNode);
-			totalNum++;
-			if(isGoalTest(currNode)) return getPrint(currNode);
-			ArrayList<Node> children = expand(currNode);
-			for (Node child:children) {
-				nodes.add(child);
-			}
-//			System.out.println(nodes.size());
-		}
-	}
-	public static String DFS(Node root) {
-		Stack<Node> nodes = new Stack<>();
-		nodes.push(root);
-		while(true) {
-			if(nodes.isEmpty()) return "NOSOLUTION";
-			Node currNode = nodes.pop();
-			if(visited.contains(currNode.getState().hashCode()))continue;
-			else visited.add(currNode.getState().hashCode());
-			if(visual) System.out.println(currNode);
-			totalNum++;
-			if(isGoalTest(currNode)) return getPrint(currNode);
-			ArrayList<Node> children = expand(currNode);
-			for (Node child:children) {
-				nodes.push(child);
-			}
-		}
-	}
-	public static String depthLimited(Node root, int depth){
-		Stack<Node> nodes = new Stack<>();
-		visited = new HashSet<Integer>();
-		nodes.push(root);
-		while(true) {
-			if(nodes.isEmpty()) return "NOSOLUTION";
-			Node currNode = nodes.pop();
-			if(visited.contains(currNode.getState().hashCode()))continue;
-			else visited.add(currNode.getState().hashCode());
-			if(currNode.getDepth() > depth) continue;
-			if(visual) System.out.println(currNode);
-			totalNum++;
-			if(isGoalTest(currNode)) return getPrint(currNode);
-			ArrayList<Node> children = expand(currNode);
-			for (Node child:children) {
-				nodes.push(child);
-			}
-		}
-	}
-	public static String IDS(Node root){
-		int depth = 0;
-		int maxDepth = initialBudget / consumptionCost;
-		while(depth <= maxDepth) {
-			String answer = depthLimited(root, depth);
-			if(!answer.equals("NOSOLUTION"))
-			{
-				return answer;
-			}
-			depth++;
-		}
-		return "NOSOLUTION";
-	}
-
-	public static String UCS(Node root) {
-		PriorityQueue<Node> nodes = new PriorityQueue<>();
-		nodes.add(root);
-		while(true) {
-			if(nodes.isEmpty()) return "NOSOLUTION";
-			Node currNode = nodes.poll();
-			if(visited.contains(currNode.getState().hashCode()))continue;
-			else visited.add(currNode.getState().hashCode());
-			if(visual) System.out.println(currNode);
-			totalNum++;
-			if(isGoalTest(currNode)) return getPrint(currNode);
-			ArrayList<Node> children = expand(currNode);
-			for (Node child:children) {
-				nodes.add(child);
-			}
-		}
-	}
-
-	public static int getH(State s){
-		String strat = s.getStrategy();
-		int pros = s.getProsperity();
-		int resourcesCost1 = priceBuild[0] + foodUseBuild[0] * unitPriceFood + materialsUseBuild[0] * unitPriceMaterials + energyUseBuild[0] * unitPriceEnergy;
-		int resourcesCost2 = priceBuild[1] + foodUseBuild[1] * unitPriceFood + materialsUseBuild[1] * unitPriceMaterials + energyUseBuild[1] * unitPriceEnergy;
-
-		if(strat.equals("GR1")||strat.equals("AS1")){
-			return (int) Math.ceil(Math.min((resourcesCost1 / prosperityBuild[0]), ((resourcesCost2 / prosperityBuild[1]))) * Math.max(0,(100 - pros)));
-		}
-		else if (strat.equals("GR2")||strat.equals("AS2")){
-			int req1 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[0]- s.getFood()) / amountRequestFood) +
-					Math.ceil(1.0 * Math.max(0,materialsUseBuild[0]- s.getMaterials()) / amountRequestMaterials) +
-					Math.ceil(1.0 * Math.max(0,energyUseBuild[0]- s.getEnergy()) / amountRequestEnergy));
-
-			int req2 = (int) (Math.ceil(1.0 * Math.max(0,foodUseBuild[1]- s.getFood()) / amountRequestFood) +
-					Math.ceil(1.0 * Math.max(0,materialsUseBuild[1]- s.getMaterials()) / amountRequestMaterials) +
-					Math.ceil(1.0 * Math.max(0,energyUseBuild[1]- s.getEnergy()) / amountRequestEnergy));
-			resourcesCost1 += req1*consumptionCost;
-			resourcesCost2 += req2*consumptionCost;
-			return (int) Math.ceil(Math.min((1.0 * resourcesCost1 / prosperityBuild[0]), ((1.0 * resourcesCost2 / prosperityBuild[1]))) *Math.max(0,(100-pros)));
-		}
-		return 0;
-	}
-	public static String getPrint(Node node){
-		return getPlan(node.getParent()) + node.getOperator() + ";" + node.getPathCost() + ";"+totalNum ;
-	}
-	public static String getPlan(Node node){
-		if(node.getParent() == null) return node.getOperator();
-		return getPlan(node.getParent()) + node.getOperator() + ",";
-	}
-	public static void main(String[] args) {
-		Runtime rt = Runtime.getRuntime();
-
-		long total_mem = rt.totalMemory();
-
-		long free_mem = rt.freeMemory();
-
-		long used_mem = total_mem - free_mem;
-		System.out.println("total memory: "+total_mem);
-		System.out.println("free memory: "+free_mem);
-		System.out.println("Amount of used memory: " + used_mem);
-
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","AS1",false));
-		totalNum = 0;
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","AS2",false));
-		totalNum = 0;
-		System.out.println(solve("32;" +
-				"20,16,11;" +
-				"76,14,14;" +
-				"9,1;9,2;9,1;" +
-				"358,14,25,23,39;" +
-				"5024,20,17,17,38;","DF",false));
-		System.out.println("Amount of used memory: " + used_mem);
-
-	}
-
 	
+	public int getMaxDepth() {
+		return this.maxDepth;
+	}
+	public boolean isVisual() {
+		return this.visual;
+	}
+	public void incrementTotalNum() {
+		this.totalNum++;
+	}
 }
