@@ -81,7 +81,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void testa0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "BF", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -161,7 +160,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void testb0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "DF", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -239,7 +237,6 @@ public class LLAPPublicGrading {
 	}
 	@Test(timeout = 120000)
 	public void testc0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "UC", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -319,7 +316,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void testd0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "ID", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -398,7 +394,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void teste0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "GR1", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -478,7 +473,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void testf0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "GR2", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
@@ -558,7 +552,6 @@ public class LLAPPublicGrading {
 
 	@Test(timeout = 120000)
 	public void testg0() throws Exception {
-		//Thread.sleep(10000);
 		String solution = LLAPSearch.solve(initialState0, "AS1", false);
 		solution = solution.replace(" ", "");
 		LLAPPlanChecker pc = new LLAPPlanChecker(initialState0);
